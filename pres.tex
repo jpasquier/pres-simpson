@@ -1,0 +1,814 @@
+\documentclass[8pt,aspectratio=169]{beamer}
+%\documentclass[8pt,aspectratio=169,handout]{beamer}
+
+% Beamer theme
+% Install from https://github.com/jolars/moloch or https://ctan.org/pkg/moloch
+\usetheme{moloch}
+
+% Packages
+\usepackage{biblatex}
+\usepackage{booktabs}
+\usepackage{fontawesome}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{tikz}
+
+% Bibtex file
+\ExecuteBibliographyOptions{doi=false,eprint=false,isbn=false,url=false}
+\addbibresource{biblio.bib}
+
+
+% Tikz libraries
+\usetikzlibrary{arrows.meta, positioning}
+
+% hyperref settings
+% (color definition: https://latexcolor.com)
+\definecolor{pastelred}{rgb}{1.0, 0.41, 0.38}
+\definecolor{steelblue}{rgb}{0.27, 0.51, 0.71}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=steelblue,
+  urlcolor=steelblue,
+  citecolor=steelblue
+}
+
+% import urls
+\input{urls.tex}
+
+% Commands
+\newcommand{\bs}{\vspace{\baselineskip}}
+\newcommand{\Vax}{\text{Vax}}
+\newcommand{\Unvax}{\text{Unvax}}
+\newcommand{\Severe}{\text{Severe}}
+\newcommand{\Effectiveness}{\text{Effectiveness}}
+\newcommand{\Prob}{\text{Prob}}
+\newcommand{\logit}{\text{logit}}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+% Title page
+\title{Simpson's Paradox}
+\author{Jérôme Pasquier}
+\date{October 24, 2024}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{document}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\maketitle
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}
+
+  \centering
+
+  \faGithub \hspace{1pt} \href{\githubURL}{\githubURL}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Professional Experience and Education}
+
+  \textbf{Current Position:}
+  \begin{itemize}
+    \item {\bfseries Biostatistician, CSL Behring (2023–Present)} \\
+      Expertise in pre-clinical research applications, including study design,
+      drug candidate selection, and assay development.
+  \end{itemize}
+
+  \textbf{Previous Positions:}
+  \begin{itemize}
+    \item {\bfseries Biostatistician, Unisanté, University of Lausanne
+      (2015–2023)} \\
+      Supported statistical aspects of research, including writing protocols,
+      performing analyses, and publishing articles.
+    \item {\bfseries Scientific Collaborator, Federal Statistical Office
+      (2013–2015, 2009–2012)} \\
+      Focused on survey design, data analysis, and quality control for national
+      projects.
+    \item {\bfseries Teaching Assistant, University of Fribourg (2003–2008)} \\
+      Assisted in mathematics instruction and interdisciplinary research.
+  \end{itemize}
+
+  \textbf{Education:}
+  \begin{itemize}
+    \item PhD in Mathematics, University of Fribourg (2003–2008) \\
+      Thesis: Stochastic models for gene regulation.
+  \end{itemize}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Covid-19 Pfizer Vaccine Effectiveness in Israel in 2021}
+
+  \begin{center}
+
+    \begin{minipage}{.75\textwidth}
+
+       \includegraphics[width=.35\textwidth]{%
+         images/becker_hospital_review_header.png}
+
+       \centering
+
+       \includegraphics[width=\textwidth]{%
+         images/becker_hospital_review_article_1.png}
+
+       \noindent\rule{\textwidth}{0.4pt}
+
+       \includegraphics[width=\textwidth]{%
+         images/becker_hospital_review_article_2.png}
+
+    \end{minipage}
+
+  \end{center}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{What Do the Data Show?}
+
+  Indeed, data show that approximately 60\% of patients with severe COVID-19
+  infection were fully vaccinated.
+
+  \bs
+
+  % +-------------+-------------+------------+
+  % |severe cases |severe unvax |severe vax  |
+  % +-------------+-------------+------------+
+  % |515          |214 (41.6%)  |301 (58.4%) |
+  % +-------------+-------------+------------+
+
+  \input{tables/israeli_data_summary_0.tex}
+
+  \bs
+
+  Data were downloaded from the \href{\imhDashboardURL}{Israeli Ministry of
+  Health Dashboard} on August 15, 2021, by Jeffrey Morris and can be found in a
+  \href{\jmorrisBlogpostURL}{blog post} by him.
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Israeli Data}
+
+  % +------ +------------+------------+--------+--------+---------------+
+  % | age   | population | population | severe | severe | effectiveness |
+  % | group | unvax      | vax        | unvax  | vax    |               |
+  % +-------+------------+------------+--------+--------+---------------+
+  % | All   | 1302912    | 5634634    | 214    | 301    | 67.5%         |
+  % | (≥12) | (18.8%)    | (81.2%)    | (16.4) | (5.3)  |               |
+  % +------ +------------+------------+--------+--------+---------------+
+
+  \input{tables/israeli_data_summary_1.tex}
+
+  \footnotetext{
+    \( \text{severe\_(un)vax\_per\_100k} =
+    \cfrac{\text{severe\_(un)vax}}{\text{population\_(un)vax}} \times 10^5 \).
+  }
+
+  \bs
+
+  The effectiveness of the vaccine is defined as the reduction in infection
+  rate\footnotemark{}.
+
+  \footnotetext{
+    See \href{\whoVaxEfficayURL}{World Health Organization website}.
+  }
+
+  \bs
+
+  If a vaccine has an effectiveness of 80 percent:
+
+  \begin{itemize}
+
+    \item It does not mean that the vaccine will only work 80\% of the time.
+
+    \item It means that in a vaccinated population, there will be 80\% fewer
+      people infected.
+
+  \end{itemize}
+
+  \[
+    \Prob(\Severe \mid \Vax)
+    = (1 - \Effectiveness) \times \Prob(\Severe \mid \Unvax)
+  \]
+
+  \[
+    \Effectiveness
+    = 1 - \frac{\Prob(\Severe \mid \Vax)}{\Prob(\Severe \mid \Unvax)}
+    \qquad \textbf{Here:} \quad
+    \Effectiveness = 1 - \frac{5.3}{16.4} = 67.5\%
+  \]
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Let's Break Down the Data by Age Group}
+
+  % +-------+------------+------------+--------+--------+---------------+
+  % | age   | population | population | severe | severe | effectiveness |
+  % | group | unvax      | vax        | unvax  | vax    |               |
+  % +-------+------------+------------+--------+--------+---------------+
+  % | All   | 1302912    | 5634634    | 214    | 301    | 67.5%         |
+  % | (≥12) | (18.8%)    | (81.2%)    | (16.4) | (5.3)  |               |
+  % +-------+------------+------------+--------+--------+---------------+
+  % | <50   | 1116834    | 3501118    | 43     | 11     | 91.8%         |
+  % |       | (24.2%)    | (75.8%)    | (3.9)  | (0.3)  |               |
+  % +-------+------------+------------+--------+--------+---------------+
+  % | ≥50   | 186078     | 2133516    | 171    | 290    | 85.2%         |
+  % |       | (8%)       | (92%)      | (91.9) | (13.6) |               |
+  % +-------+------------+------------+--------+--------+---------------+
+
+  \begin{overprint}
+
+    \onslide<1>
+
+    \input{tables/israeli_data_summary_2_intermediate.tex}
+
+    \onslide<2->
+
+    \input{tables/israeli_data_summary_2.tex}
+
+  \end{overprint}
+
+  \bs
+
+  \begin{overprint}
+
+    \onslide<1>
+
+    We have good effectiveness in the <50 age group!
+
+    \bs
+
+    So, I guess that the effectiveness is very low in the $\ge$50 age group.
+
+    \onslide<2>
+
+    \bs
+
+    \begin{center}
+
+      \Huge{\bfseries WTF?}
+
+    \end{center}
+
+
+    \onslide<3->
+
+    The effectiveness measured in the whole population is lower than the
+    effectiveness measured in each age group.
+
+    \bs
+
+    It seems paradoxical. Why do we have an effectiveness lower than
+    70\% in the whole population while we have an effectiveness higher than
+    85\% in each age group?
+
+    \bs
+
+    This paradoxical effect is what we call {\bfseries \large Simpson's
+    Paradox}.
+
+  \end{overprint}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Let's Break Down the Data by Age Group}
+
+  % +-------+------------+------------+---------+--------+---------------+
+  % | age   | population | population | severe  | severe | effectiveness |
+  % | group | unvax      | vax        | unvax   | vax    |               |
+  % +-------+------------+------------+---------+--------+---------------+
+  % | 12-15 | 383649     | 184549     | 1       | 0      | 100%          |
+  % |       | (67.5%)    | (32.5%)    | (0.3)   | (0)    |               |
+  % +-------+------------+------------+---------+--------+---------------+
+  % | 16-19 | 127745     | 429109     | 2       | 0      | 100%          |
+  % |       | (22.9%)    | (77.1%)    | (1.6)   | (0)    |               |
+  % +-------+------------+------------+---------+--------+---------------+
+  % | 20-29 | 265871     | 991408     | 4       | 0      | 100%          |
+  % |       | (21.1%)    | (78.9%)    | (1.5)   | (0)    |               |
+  % +-------+------------+------------+---------+--------+---------------+
+  % | 30-39 | 194213     | 968837     | 12      | 2      | 96.7%         |
+  % |       | (16.7%)    | (83.3%)    | (6.2)   | (0.2)  |               |
+  % +-------+------------+------------+---------+--------+---------------+
+  % | 40-49 | 145355     | 927214     | 24      | 9      | 94.1%         |
+  % |       | (13.6%)    | (86.4%)    | (16.5)  | (1)    |               |
+  % +-------+------------+------------+---------+--------+---------------+
+  % | 50-59 | 84545      | 747949     | 34      | 22     | 92.7%         |
+  % |       | (10.2%)    | (89.8%)    | (40.2)  | (2.9)  |               |
+  % +-------+------------+------------+------- -+--------+---------------+
+  % | 60-69 | 65205      | 665717     | 50      | 58     | 88.6%         |
+  % |       | (8.9%)     | (91.1%)    | (76.7)  | (8.7)  |               |
+  % +-------+------------+------------+---------+--------+---------------+
+  % | 70-79 | 20512      | 464336     | 39      | 92     | 89.6%         |
+  % |       | (4.2%)     | (95.8%)    | (190.1) | (19.8) |               |
+  % +-------+------------+------------+---------+--------+---------------+
+  % | 80-89 | 12683      | 208911     | 32      | 100    | 81%           |
+  % |       | (5.7%)     | (94.3%)    | (252.3) | (47.9) |               |
+  % +-------+------------+------------+---------+--------+---------------+
+  % | 90+   | 3132       | 46602      | 16      | 18     | 92.4%         |
+  % |       | (6.3%)     | (93.7%)    | (510.8) | (38.6) |               |
+  % +-------+------------+------------+---------+--------+---------------+
+
+  \input{tables/israeli_data_summary_3.tex}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{So What's the Problem?}
+
+  \begin{center}
+
+    \onslide<2>{{\bfseries \Large Confounding}}
+
+    \bs
+
+    \begin{tikzpicture}[>=Stealth]
+
+      % Set common node style
+      \tikzset{
+        mynode/.style={draw, circle, minimum size=2cm, align=center},
+      }
+
+      % Nodes
+      \node (exposure) [mynode] at (0,0) {Vaccination\\status};
+      \node (outcome) [mynode] at (4,0) {Disease\\severity};
+
+      \onslide<2->{
+        \node (confounder) [mynode] at (2,3) {Age};
+      }
+
+      % Arrows
+      \draw[->] (exposure) -- (outcome);
+
+      \onslide<2->{
+        \draw[->] (confounder) -- (exposure);
+        \draw[->] (confounder) -- (outcome);
+      }
+
+    \end{tikzpicture}
+
+  \end{center}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Unbalanced Data}
+
+  The proportion of vaccinated people in each age group is different.
+
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{lr}
+      \toprule
+      \textbf{Age Group} & \textbf{Vaccinated (\%)} \\
+      \midrule
+      <50                & 75.8\%                   \\
+      $\ge$50            & 92.0\%                   \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+
+  \begin{figure}[!h]
+    \centering
+    \resizebox{.9\columnwidth}{!}{\input{figures/israeli_data_summary_2.tex}}
+  \end{figure}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Balanced Vaccination}
+
+  \input{tables/israeli_data_summary_2.tex}
+
+  \bs
+
+  Let's maintain the original effectiveness in each age group while harmonizing
+  the vaccination rate. The number of serious cases is recalculated
+  accordingly. Finally, the effectiveness is recalculated for the population as
+  a whole.
+
+  \bs
+
+  \input{tables/israeli_data_summary_2_balanced.tex}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Balanced Vaccination}
+
+  \begin{figure}[!h]
+    \centering
+    \resizebox{.9\columnwidth}{!}{\input{%
+      figures/israeli_data_summary_2_balanced.tex}}
+  \end{figure}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Balanced Data}
+
+  \begin{center}
+
+    \onslide<1>{{\bfseries \Large Confounding}}
+
+    \bs
+
+    \begin{tikzpicture}[>=Stealth]
+
+      % Set common node style
+      \tikzset{
+        mynode/.style={draw, circle, minimum size=2cm, align=center},
+      }
+
+      % Nodes
+      \node (exposure) [mynode] at (0,0) {Vaccination\\status};
+      \node (outcome) [mynode] at (4,0) {Disease\\severity};
+      \node (confounder) [mynode] at (2,3) {Age};
+
+      % Arrows
+      \draw[->] (exposure) -- (outcome);
+      \draw[->] (confounder) -- (outcome);
+      \onslide<1>{
+        \draw[->] (confounder) -- (exposure);
+      }
+
+    \end{tikzpicture}
+
+    \bs
+
+    \onslide<2>{{\bfseries Balancing the data removed the confounding.}}
+
+  \end{center}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Treatments for Kidney Stones}
+
+  \begin{minipage}{0.8\textwidth}
+
+    \includegraphics[width=\textwidth]{images/charig1986_title.png}
+
+  \end{minipage}%
+  %
+  \begin{minipage}{0.2\textwidth}
+    \href{\charigURL}{
+      \small
+      Charig et al. \\
+      Br Med J (Clin Res Ed) \\
+      1986
+    }
+  \end{minipage}
+
+  \begin{minipage}[t]{0.25\textwidth}
+
+    {\bfseries Open Surgery}
+
+    \includegraphics[width=\textwidth]{images/open_surgery.jpg}
+
+  \end{minipage}%
+  %
+  \begin{minipage}[t]{0.35\textwidth}
+
+    {\bfseries Percutaneous Nephrolithotomy}
+
+    \includegraphics[width=\textwidth]{images/percutaneous-nephrolithotomy.jpg}
+
+  \end{minipage}%
+  %
+  \begin{minipage}[t]{0.4\textwidth}
+
+    {\bfseries Extracorporeal Shock Wave Lithotripsy}
+
+    \includegraphics[width=\textwidth]{%
+      images/extracorporeal_shock_wave_lithotripsy.png}
+
+    \end{minipage}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Kidney Stones Data}
+
+  % |surgery |stone_size |   n| success| failure| rate|
+  % |:-------|:----------|---:|-------:|-------:|----:|
+  % |open    |small      |  87|      81|       6| 0.93|
+  % |pcnl    |small      | 270|     234|      36| 0.87|
+  % |open    |large      | 263|     192|      71| 0.73|
+  % |pcnl    |large      |  80|      55|      25| 0.69|
+  % |open    |overall    | 350|     273|      77| 0.78|
+  % |pcnl    |overall    | 350|     289|      61| 0.83|
+
+  \begin{minipage}{.6\textwidth}
+
+    {\bfseries Data from the Article:}
+
+    \bs
+
+    \input{tables/kidney_stones.tex}
+
+  \end{minipage}%
+  %
+  \begin{minipage}{.4\textwidth}
+
+    \centering
+
+    \begin{tikzpicture}[>=Stealth]
+      % Node style
+      \tikzset{
+        mynode/.style={draw, circle, minimum size=1.5cm, align=center},
+      }
+      % Nodes
+      \node (exposure) [mynode] at (0,0) {Surgery\\type};
+      \node (outcome) [mynode] at (3,0) {Free of\\stones};
+      \node (confounder) [mynode] at (1.5,2) {Stone\\size};
+      % Arrows
+      \draw[->] (exposure) -- (outcome);
+      \draw[->] (confounder) -- (outcome);
+      \draw[->] (confounder) -- (exposure);
+    \end{tikzpicture}
+
+  \end{minipage}
+
+  \bs
+
+  {\bfseries Statistics (Risk):}
+
+  \bs
+
+  % +--------+---------+---------+------------+-------+--------+
+  % |stone   | success | success | risk       | risk  | odds   |
+  % |size    | open    | pcnl    | difference | ratio | ratios |
+  % +--------+---------+---------+------------+-------+--------+
+  % |small   | 81/87   | 234/270 | -0.06      | 0.93  | 0.48   |
+  % +--------+---------+---------+------------+-------+--------+
+  % |large   | 192/263 | 55/80   | -0.04      | 0.94  | 0.81   |
+  % +--------+---------+---------+------------+-------+--------+
+  % |overall | 273/350 | 289/350 |  0.05      | 1.06  | 1.34   |
+  % +--------+---------+---------+------------+-------+--------+
+
+  \input{tables/kidney_stones_stats.tex}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Kidney Stones Data - Balanced}
+
+  \begin{minipage}{.6\textwidth}
+
+    {\bfseries Balanced Data:}
+
+    \vspace{.5\baselineskip}
+
+    {
+      \small
+      (Keep the rate in groups, balance the data, and recalculate the number of
+      successes and failures.)
+    }
+
+    \vspace{.35\baselineskip}
+
+    \input{tables/kidney_stones_balanced.tex}
+
+  \end{minipage}%
+  %
+  \begin{minipage}{.4\textwidth}
+
+    \centering
+
+    \begin{tikzpicture}[>=Stealth]
+      % Node style
+      \tikzset{
+        mynode/.style={draw, circle, minimum size=1.5cm, align=center},
+      }
+      % Nodes
+      \node (exposure) [mynode] at (0,0) {Surgery\\type};
+      \node (outcome) [mynode] at (3,0) {Free of\\stones};
+      \node (confounder) [mynode] at (1.5,2) {Stone\\size};
+      % Arrows
+      \draw[->] (exposure) -- (outcome);
+      \draw[->] (confounder) -- (outcome);
+    \end{tikzpicture}
+
+  \end{minipage}
+
+  \bs
+
+  {\bfseries Statistics (Risk):}
+
+  \bs
+
+  \input{tables/kidney_stones_stats_balanced.tex}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Kidney Stones Data - Logistic Regression}
+
+  {\bfseries Model 1:}
+  %
+  \(
+    \logit(\text{free of stones}) = \beta_0 + \beta_1 \times
+    \text{surgery type}
+  \)
+
+  \bs
+
+  {\bfseries Model 2:}
+  %
+  \(
+    \logit(\text{free of stones}) = \beta_0 + \beta_1 \times
+    \text{surgery type} + \beta_2 \times \text{stone size}
+  \)
+
+  \bs \bs
+
+  \begin{minipage}[t]{.5\textwidth}
+
+    \centering
+
+    {\bfseries Original Data, Model 1}
+
+    \input{tables/kidney_stones_logistic_regression_1.tex}
+
+  \end{minipage}%
+  %
+  \begin{minipage}[t]{.5\textwidth}
+
+    \centering
+
+    {\bfseries Original Data, Model 2}
+
+    \input{tables/kidney_stones_logistic_regression_2.tex}
+
+  \end{minipage}
+
+  \bs
+
+  \begin{minipage}[t]{.5\textwidth}
+
+    \centering
+
+    {\bfseries Balanced Data, Model 1}
+
+    \input{tables/kidney_stones_logistic_regression_1_balanced.tex}
+
+  \end{minipage}%
+  %
+  \begin{minipage}[t]{.5\textwidth}
+
+    \centering
+
+    {\bfseries Balanced Data, Model 2}
+
+    \input{tables/kidney_stones_logistic_regression_2_balanced.tex}
+
+  \end{minipage}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+% \begin{frame}{Moderation in balanced data}
+%
+% \end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Latest Example (Seen on an ARTE Program)}
+
+  \begin{minipage}{.5\textwidth}
+
+    \onslide<1->
+
+    \begin{figure}[!h]
+      \centering
+      \resizebox{.9\columnwidth}{!}{\input{figures/smoking_1.tex}}
+    \end{figure}
+
+  \end{minipage}%
+  %
+  \begin{minipage}{.5\textwidth}
+
+    \onslide<2->
+
+    \begin{figure}[!h]
+      \centering
+      \resizebox{.9\columnwidth}{!}{\input{figures/smoking_2.tex}}
+    \end{figure}
+
+  \end{minipage}
+
+  \begin{minipage}{.5\textwidth}
+
+    \onslide<3->
+
+    \begin{figure}[!h]
+      \centering
+      \resizebox{.9\columnwidth}{!}{\input{figures/smoking_density.tex}}
+    \end{figure}
+
+  \end{minipage}%
+  %
+  \begin{minipage}{.5\textwidth}
+
+    \scriptsize
+
+    \centering
+
+    \bs
+
+    \onslide<3->
+
+    \begin{tikzpicture}[>=Stealth]
+      % Node style
+      \tikzset{
+        mynode/.style={draw, circle, minimum size=1.25cm, align=center},
+      }
+      % Nodes
+      \node (exposure) [mynode] at (0,0) {Cigarettes};
+      \node (outcome) [mynode] at (2.4,0) {Performance};
+      \node (confounder) [mynode] at (1.2,1.75) {\faVenus/\faMars};
+      % Arrows
+      \draw[->] (exposure) -- (outcome);
+      \draw[->] (confounder) -- (outcome);
+      \draw[->] (confounder) -- (exposure);
+    \end{tikzpicture}
+
+  \end{minipage}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Conclusions}
+
+  \begin{itemize}
+
+    \setlength\itemsep{2
+    em}
+
+    \item Simpson's paradox is (normaly) avoided in randomized trials.
+
+    \item However, it can be a serious problem in observational studies.
+
+    \item Good statistics require more than just mathematics. Statisticians
+      need to work closely with specialists in the field from which the data
+      comes.
+
+    \item Mathematics allows us to understand the world as long as we remember
+      that it exists.
+
+  \end{itemize}
+
+  \bs \bs
+
+  \begin{center}
+
+    \Huge
+
+    \onslide<2->{Thank you for your attention!}
+
+  \end{center}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}
+
+  \nocite{bonovas2023simpsons}
+  \nocite{carbajal2021nearly}
+  \nocite{charig1986comparison}
+  \nocite{morris2021israeli}
+  \nocite{vanwaerebeke2022voyages}
+  \nocite{who2021vaccine}
+
+  \printbibliography
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\end{document}
